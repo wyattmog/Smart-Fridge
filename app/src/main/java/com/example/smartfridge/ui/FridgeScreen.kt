@@ -1,5 +1,6 @@
 package com.example.smartfridge.ui
 
+import android.app.Application
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,14 +25,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
 
 @Composable
 fun FridgeScreen(
     onNavigateToRecipe: (String) -> Unit
 ) {
-    val viewModel: FridgeViewModel = viewModel()
-    val uiState by viewModel.recipeUiState.collectAsState()
     val context = LocalContext.current
+    val viewModel: FridgeViewModel = viewModel(
+        factory = ViewModelProvider.AndroidViewModelFactory.getInstance(context.applicationContext as Application)
+    )
+    val uiState by viewModel.recipeUiState.collectAsState()
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()

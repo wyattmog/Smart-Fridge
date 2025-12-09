@@ -48,6 +48,11 @@ dependencies {
 // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
+    implementation(libs.onnxruntime.android)
+
+    implementation(libs.androidx.compose.material.icons.extended)
+
+
 // Retrofit & Moshi
     implementation(libs.retrofit)
     implementation(libs.converter.moshi)

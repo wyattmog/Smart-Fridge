@@ -13,4 +13,6 @@ class RecipeRepository(private val apiService: ApiService) {
         val response = apiService.generateRecipe(sessionId, sessionToken, ingredients)
         return response.recipe
     }
+
+
 }

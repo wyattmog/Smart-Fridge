@@ -1,17 +1,25 @@
 package com.example.smartfridge.ui
 
+import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartfridge.data.RecipeRepository
+import com.example.smartfridge.ml.IngredientDetector
 import com.example.smartfridge.network.RetrofitInstance
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 sealed interface RecipeUiState {
     object Idle : RecipeUiState
@@ -20,8 +28,9 @@ sealed interface RecipeUiState {
     data class Error(val message: String) : RecipeUiState
 }
 
-class FridgeViewModel : ViewModel() {
+class FridgeViewModel(application: Application) : AndroidViewModel(application) {
     private val recipeRepository = RecipeRepository(RetrofitInstance.api)
+    private val ingredientDetector = IngredientDetector(application)
 
     var ingredientsText by mutableStateOf("")
         private set
@@ -58,6 +67,24 @@ class FridgeViewModel : ViewModel() {
 
     fun onImageSelected(uri: Uri?) {
         selectedImageUri = uri
+        uri?.let {
+            val bitmap = it.toBitmap()
+            detectIngredients(bitmap)
+        }
+    }
+
+    private fun detectIngredients(bitmap: Bitmap) {
+        viewModelScope.launch {
+            try {
+                val ingredients = withContext(Dispatchers.Default) {
+                    ingredientDetector.detect(bitmap)
+                }
+                ingredientsText = ingredients.joinToString(", ")
+            } catch (e: Exception) {
+                Log.e("FridgeViewModel", "Error detecting ingredients", e)
+                _recipeUiState.value = RecipeUiState.Error("Failed to detect ingredients: ${e.message}")
+            }
+        }
     }
 
     fun getRecipe() {
@@ -74,7 +101,7 @@ class FridgeViewModel : ViewModel() {
         viewModelScope.launch {
             _recipeUiState.value = RecipeUiState.Loading
             try {
-                val ingredients = ingredientsText.split(",").joinToString(",") { it.trim() }
+                val ingredients = ingredientsText.split(",").map { it.trim() }.joinToString(",")
                 val recipe = recipeRepository.getRecipe(sessionId!!, sessionToken!!, ingredients)
                 _recipeUiState.value = RecipeUiState.Success(recipe)
             } catch (e: Exception) {
@@ -86,5 +113,15 @@ class FridgeViewModel : ViewModel() {
     
     fun resetUiState() {
         _recipeUiState.value = RecipeUiState.Idle
+    }
+
+    private fun Uri.toBitmap(): Bitmap {
+        val context = getApplication<Application>()
+        val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, this))
+        } else {
+            MediaStore.Images.Media.getBitmap(context.contentResolver, this)
+        }
+        return bitmap.copy(Bitmap.Config.ARGB_8888, true)
     }
 }
