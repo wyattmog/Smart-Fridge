@@ -79,7 +79,7 @@ class FridgeViewModel(application: Application) : AndroidViewModel(application) 
                 val ingredients = withContext(Dispatchers.Default) {
                     ingredientDetector.detect(bitmap)
                 }
-                ingredientsText = ingredients.joinToString(", ")
+                ingredientsText += ", " + ingredients.joinToString(", ")
             } catch (e: Exception) {
                 Log.e("FridgeViewModel", "Error detecting ingredients", e)
                 _recipeUiState.value = RecipeUiState.Error("Failed to detect ingredients: ${e.message}")

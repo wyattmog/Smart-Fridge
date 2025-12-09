@@ -8,7 +8,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitInstance {
-    private const val BASE_URL = "http://10.0.2.2:5000/"
+    private const val BASE_URL = "https://smart-fridge-backend-production-7fec.up.railway.app/"
 
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
