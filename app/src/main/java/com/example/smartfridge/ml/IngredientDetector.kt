@@ -8,7 +8,9 @@ import android.graphics.Bitmap
 import android.util.Log
 import com.example.smartfridge.assetFilePath
 import java.nio.FloatBuffer
+/*
 
+ */
 class IngredientDetector(context: Context) {
 
     private val classNames: List<String>
